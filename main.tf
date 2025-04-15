@@ -15,9 +15,6 @@ module "ecs_service_dev" {
   environment   = "dev"
   project_name  = var.project_name
   owner         = var.owner
-  ami_id        = var.ami_id
-  instance_type = "t3.micro"
-  server_name   = var.server_name
 }
 
 module "ecs_service_stage" {
@@ -28,9 +25,6 @@ module "ecs_service_stage" {
   environment   = "dev"
   project_name  = var.project_name
   owner         = var.owner
-  ami_id        = var.ami_id
-  instance_type = "t3.nano"
-  server_name   = var.server_name
 }
 
 # output "ecs_service_dev_public_ip" {

@@ -27,21 +27,3 @@ variable "owner" {
   type        = string
   default     = "DevOps"
 }
-
-variable "ami_id" {
-  description = "ID de la AMI a utilizar"
-  type        = string
-  default     = "ami-0440d3b780d96b29d"
-}
-
-variable "instance_type" {
-  description = "Tipo de instancia a utilizar"
-  type        = string
-  default     = "t3.micro"
-}
-
-variable "server_name" {
-  description = "Nombre del servidor"
-  type        = string
-  default     = "nginx-server"
-}
