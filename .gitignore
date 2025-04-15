@@ -1,0 +1,6 @@
+# Terraform variable definitions (contienen secretos o valores locales)
+terraform.tfvars
+*.auto.tfvars
+terraform.tfstate*
+
+.terraform
