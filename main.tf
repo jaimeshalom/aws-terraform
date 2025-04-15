@@ -1,8 +1,8 @@
 terraform {
   backend "s3" {
-    bucket = "tfstate-${var.project_name}"
-    key    = "terraform/${var.project_name}.tfstate"
-    region = var.aws_region
+    bucket = "tfstate-terraform-practice-afda234234asw34gfer35"
+    key    = "terraform/terraform-practice.tfstate"
+    region = "us-east-1"
   }
 }
 
