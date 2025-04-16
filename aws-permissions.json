@@ -24,7 +24,7 @@
 				"iam:CreatePolicy",
 				"iam:TagPolicy"
 			],
-            "Resource": "arn:aws:iam::*:policy/terraform-practice-dev-*",
+			"Resource": "arn:aws:iam::*:policy/terraform-practice-dev-*",
 			"Condition": {
 				"StringEquals": {
 					"aws:RequestTag/ManagedBy": "Terraform"
@@ -58,8 +58,9 @@
 				"ec2:DescribeRouteTables",
 				"ec2:DescribeSecurityGroups",
 				"ec2:DescribeVpcAttribute",
-                "ec2:CreateVpc",
-                "ec2:CreateTags",
+				"ec2:DescribeNetworkInterfaces",
+				"ec2:CreateVpc",
+				"ec2:CreateTags",
 				"ec2:CreateSubnet",
 				"ec2:CreateInternetGateway",
 				"ec2:CreateSecurityGroup",
@@ -68,18 +69,17 @@
 				"ec2:AuthorizeSecurityGroupEgress",
 				"ec2:AuthorizeSecurityGroupIngress",
 				"ec2:AssociateRouteTable",
+				"ec2:DisassociateRouteTable",
 				"ec2:AttachInternetGateway",
-                "ec2:ModifyVpcAttribute",
+				"ec2:ModifyVpcAttribute",
 				"ec2:ModifySubnetAttribute",
 				"ec2:RevokeSecurityGroupEgress",
-				"ec2:DisassociateRouteTable",
-				"ec2:DescribeNetworkInterfaces",
 				"ec2:DeleteSecurityGroup",
 				"ec2:DeleteRouteTable",
-                "ec2:DeleteSubnet",
-                "ec2:DetachInternetGateway",
-                "ec2:DeleteInternetGateway",
-                "ec2:DeleteVpc"
+				"ec2:DeleteSubnet",
+				"ec2:DetachInternetGateway",
+				"ec2:DeleteInternetGateway",
+				"ec2:DeleteVpc"
 			],
 			"Resource": "*"
 		},
@@ -95,7 +95,7 @@
 				"elasticloadbalancing:DescribeTags",
 				"elasticloadbalancing:DescribeListenerAttributes"
 			],
-            "Resource": "*"
+			"Resource": "*"
 		},
 		{
 			"Effect": "Allow",
@@ -111,11 +111,11 @@
 				"elasticloadbalancing:DeleteTargetGroup",
 				"elasticloadbalancing:DeleteLoadBalancer"
 			],
-            "Resource": [
-                "arn:aws:elasticloadbalancing:*:*:loadbalancer/app/terraform-practice-dev-*",
-                "arn:aws:elasticloadbalancing:*:*:targetgroup/terraform-practice-dev-*",
-                "arn:aws:elasticloadbalancing:*:*:listener/app/terraform-practice-dev-*"
-            ]
+			"Resource": [
+				"arn:aws:elasticloadbalancing:*:*:loadbalancer/app/terraform-practice-dev-*",
+				"arn:aws:elasticloadbalancing:*:*:targetgroup/terraform-practice-dev-*",
+				"arn:aws:elasticloadbalancing:*:*:listener/app/terraform-practice-dev-*"
+			]
 		},
 		{
 			"Effect": "Allow",
@@ -125,7 +125,7 @@
 				"ecs:DescribeTaskDefinition",
 				"ecs:DeregisterTaskDefinition"
 			],
-            "Resource": "*"
+			"Resource": "*"
 		},
 		{
 			"Effect": "Allow",
@@ -140,11 +140,11 @@
 				"ecs:updateCluster",
 				"ecs:RegisterTaskDefinition"
 			],
-            "Resource": [
-                "arn:aws:ecs:*:*:cluster/terraform-practice-dev-*",
-                "arn:aws:ecs:*:*:service/terraform-practice-dev-*/terraform-practice-dev-*",
-                "arn:aws:ecs:*:*:task-definition/terraform-practice-dev-*"
-            ]
+			"Resource": [
+				"arn:aws:ecs:*:*:cluster/terraform-practice-dev-*",
+				"arn:aws:ecs:*:*:service/terraform-practice-dev-*/terraform-practice-dev-*",
+				"arn:aws:ecs:*:*:task-definition/terraform-practice-dev-*"
+			]
 		},
 		{
 			"Effect": "Allow",
@@ -155,17 +155,17 @@
 				"ecr:CreateRepository",
 				"ecr:TagResource"
 			],
-            "Resource": "arn:aws:ecr:*:*:repository/terraform-practice-dev-*"
+			"Resource": "arn:aws:ecr:*:*:repository/terraform-practice-dev-*"
 		},
 		{
 			"Effect": "Allow",
 			"Action": [
 				"secretsmanager:CreateSecret",
-                "secretsmanager:TagResource",
+				"secretsmanager:TagResource",
 				"secretsmanager:PutSecretValue",
 				"secretsmanager:DeleteSecret"
 			],
-            "Resource": "arn:aws:secretsmanager:*:*:secret:terraform-practice-dev-*"
+			"Resource": "arn:aws:secretsmanager:*:*:secret:terraform-practice-dev-*"
 		},
 		{
 			"Effect": "Allow",
