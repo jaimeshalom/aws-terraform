@@ -222,8 +222,10 @@ resource "aws_ecr_repository" "ecr_repository" {
 
 // MongoDB Secret
 resource "aws_secretsmanager_secret" "mongodb_uri" {
-  name        = "${local.name_prefix}-mongodb_uri"
-  description = "Cadena de conexión a MongoDB para ${local.name_prefix}"
+  name                    = "${local.name_prefix}-mongodb_uri"
+  description             = "Cadena de conexión a MongoDB para ${local.name_prefix}"
+  recovery_window_in_days = 0 # Eliminación inmediata sin período de recuperación
+
 
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-mongodb_uri"
@@ -283,7 +285,7 @@ resource "aws_ecs_task_definition" "task_definition" {
       portMappings = [
         {
           containerPort = 3000
-          hostPort      = 80
+          hostPort      = 3000
         }
       ],
       memory = 512,

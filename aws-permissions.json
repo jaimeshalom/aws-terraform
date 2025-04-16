@@ -1,0 +1,178 @@
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Action": [
+				"*"
+			],
+			"Resource": "arn:aws:iam::*:role/terraform-practice-dev-*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": "iam:PassRole",
+			"Resource": "arn:aws:iam::*:role/terraform-practice-dev-ecs_*",
+			"Condition": {
+				"StringEquals": {
+					"iam:PassedToService": "ecs-tasks.amazonaws.com"
+				}
+			}
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"iam:CreatePolicy",
+				"iam:TagPolicy"
+			],
+            "Resource": "arn:aws:iam::*:policy/terraform-practice-dev-*",
+			"Condition": {
+				"StringEquals": {
+					"aws:RequestTag/ManagedBy": "Terraform"
+				}
+			}
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"*"
+			],
+			"Resource": "arn:aws:iam::*:policy/terraform-practice-dev-*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"secretsmanager:DescribeSecret",
+				"secretsmanager:GetSecretValue",
+				"secretsmanager:ListSecretVersionIds",
+				"secretsmanager:GetResourcePolicy"
+			],
+			"Resource": "arn:aws:secretsmanager:us-east-1:*:secret:terraform-practice-dev-*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"ec2:DescribeAvailabilityZones",
+				"ec2:DescribeVpcs",
+				"ec2:DescribeSubnets",
+				"ec2:DescribeInternetGateways",
+				"ec2:DescribeRouteTables",
+				"ec2:DescribeSecurityGroups",
+				"ec2:DescribeVpcAttribute",
+                "ec2:CreateVpc",
+                "ec2:CreateTags",
+				"ec2:CreateSubnet",
+				"ec2:CreateInternetGateway",
+				"ec2:CreateSecurityGroup",
+				"ec2:CreateRouteTable",
+				"ec2:CreateRoute",
+				"ec2:AuthorizeSecurityGroupEgress",
+				"ec2:AuthorizeSecurityGroupIngress",
+				"ec2:AssociateRouteTable",
+				"ec2:AttachInternetGateway",
+                "ec2:ModifyVpcAttribute",
+				"ec2:ModifySubnetAttribute",
+				"ec2:RevokeSecurityGroupEgress",
+				"ec2:DisassociateRouteTable",
+				"ec2:DescribeNetworkInterfaces",
+				"ec2:DeleteSecurityGroup",
+				"ec2:DeleteRouteTable",
+                "ec2:DeleteSubnet",
+                "ec2:DetachInternetGateway",
+                "ec2:DeleteInternetGateway",
+                "ec2:DeleteVpc"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"elasticloadbalancing:DescribeLoadBalancers",
+				"elasticloadbalancing:DescribeLoadBalancerAttributes",
+				"elasticloadbalancing:DescribeListeners",
+				"elasticloadbalancing:DescribeRules",
+				"elasticloadbalancing:DescribeTargetGroups",
+				"elasticloadbalancing:DescribeTargetGroupAttributes",
+				"elasticloadbalancing:DescribeTags",
+				"elasticloadbalancing:DescribeListenerAttributes"
+			],
+            "Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"elasticloadbalancing:AddTags",
+				"elasticloadbalancing:CreateTargetGroup",
+				"elasticloadbalancing:CreateListener",
+				"elasticloadbalancing:CreateLoadBalancer",
+				"elasticloadbalancing:ModifyTargetGroupAttributes",
+				"elasticloadbalancing:ModifyLoadBalancerAttributes",
+				"elasticloadbalancing:ModifyListenerAttributes",
+				"elasticloadbalancing:DeleteListener",
+				"elasticloadbalancing:DeleteTargetGroup",
+				"elasticloadbalancing:DeleteLoadBalancer"
+			],
+            "Resource": [
+                "arn:aws:elasticloadbalancing:*:*:loadbalancer/app/terraform-practice-dev-*",
+                "arn:aws:elasticloadbalancing:*:*:targetgroup/terraform-practice-dev-*",
+                "arn:aws:elasticloadbalancing:*:*:listener/app/terraform-practice-dev-*"
+            ]
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"ecs:DescribeClusters",
+				"ecs:DescribeServices",
+				"ecs:DescribeTaskDefinition",
+				"ecs:DeregisterTaskDefinition"
+			],
+            "Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"ecs:ListClusters",
+				"ecs:TagResource",
+				"ecs:createService",
+				"ecs:createCluster",
+				"ecs:deleteService",
+				"ecs:deleteCluster",
+				"ecs:updateService",
+				"ecs:updateCluster",
+				"ecs:RegisterTaskDefinition"
+			],
+            "Resource": [
+                "arn:aws:ecs:*:*:cluster/terraform-practice-dev-*",
+                "arn:aws:ecs:*:*:service/terraform-practice-dev-*/terraform-practice-dev-*",
+                "arn:aws:ecs:*:*:task-definition/terraform-practice-dev-*"
+            ]
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"ecr:DescribeRepositories",
+				"ecr:ListTagsForResource",
+				"ecr:DeleteRepository",
+				"ecr:CreateRepository",
+				"ecr:TagResource"
+			],
+            "Resource": "arn:aws:ecr:*:*:repository/terraform-practice-dev-*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"secretsmanager:CreateSecret",
+                "secretsmanager:TagResource",
+				"secretsmanager:PutSecretValue",
+				"secretsmanager:DeleteSecret"
+			],
+            "Resource": "arn:aws:secretsmanager:*:*:secret:terraform-practice-dev-*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
+				"kms:RetireGrant"
+			],
+			"Resource": "*"
+		}
+	]
+}
