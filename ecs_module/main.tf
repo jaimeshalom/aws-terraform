@@ -220,20 +220,61 @@ resource "aws_ecr_repository" "ecr_repository" {
   })
 }
 
+// MongoDB Secret
+resource "aws_secretsmanager_secret" "mongodb_uri" {
+  name        = "${local.name_prefix}-mongodb_uri"
+  description = "Cadena de conexión a MongoDB para ${local.name_prefix}"
+
+  recovery_window_in_days = 0
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-mongodb_uri"
+  })
+}
+
+resource "aws_iam_policy" "mongodb_uri_allow_read" {
+  name        = "${local.name_prefix}-mongodb_uri_allow_read"
+  description = "Política para acceder a MongoDB"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret",
+          "secretsmanager:ListSecretVersionIds"
+        ]
+        Effect   = "Allow"
+        Resource = aws_secretsmanager_secret.mongodb_uri.arn
+      }
+    ]
+  })
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-mongodb_uri_allow_read"
+  })
+}
+
+resource "aws_iam_policy_attachment" "attach_mongodb_uri_allow_read" {
+  name       = "${local.name_prefix}-attach_mongodb_uri_allow_read"
+  roles      = [aws_iam_role.ecs_task_execution_role.name]
+  policy_arn = aws_iam_policy.mongodb_uri_allow_read.arn
+}
+
 // ECS Task Definition
 resource "aws_ecs_task_definition" "task_definition" {
   family                   = "${local.name_prefix}-task_definition"
-  network_mode             = "awsvpc"    # add the AWS VPN network mode as this is required for Fargate
-  memory                   = 512         # Specify the memory the container requires
-  cpu                      = 256         # Specify the CPU the container requires
+  network_mode             = "awsvpc" # add the AWS VPN network mode as this is required for Fargate
+  memory                   = 512      # Specify the memory the container requires
+  cpu                      = 256      # Specify the CPU the container requires
   requires_compatibilities = ["FARGATE"]
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
 
   container_definitions = jsonencode([
     {
-      name      = "${local.name_prefix}-container"
-      // TODO: Considerar como adaptarlo al modelo actual en donde uso el SHA del commit
+      name = "${local.name_prefix}-container"
       image     = "${aws_ecr_repository.ecr_repository.repository_url}:latest"
       essential = true
       portMappings = [
@@ -244,7 +285,22 @@ resource "aws_ecs_task_definition" "task_definition" {
       ],
       memory = 512,
       cpu    = 256
-      // TODO: Configurar los logs
+
+      secrets = [
+        {
+          name      = "MONGODB_URI"
+          valueFrom = aws_secretsmanager_secret.mongodb_uri.arn
+        }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = "/ecs/${local.name_prefix}"
+          awslogs-region        = var.aws_region
+          awslogs-stream-prefix = "ecs"
+        }
+      }
     }
   ])
 
@@ -269,9 +325,9 @@ resource "aws_security_group" "ecs_sg" {
   vpc_id      = aws_vpc.vpc.id
 
   ingress {
-    from_port = 0
-    to_port   = 0
-    protocol  = "-1"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
     # Only allowing traffic in from the load balancer security group
     security_groups = [aws_security_group.alb_sg.id]
