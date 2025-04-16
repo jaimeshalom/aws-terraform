@@ -225,11 +225,14 @@ resource "aws_secretsmanager_secret" "mongodb_uri" {
   name        = "${local.name_prefix}-mongodb_uri"
   description = "Cadena de conexión a MongoDB para ${local.name_prefix}"
 
-  recovery_window_in_days = 0
-
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-mongodb_uri"
   })
+}
+
+resource "aws_secretsmanager_secret_version" "mongodb_uri_version" {
+  secret_id     = aws_secretsmanager_secret.mongodb_uri.id
+  secret_string = var.mongodb_uri
 }
 
 resource "aws_iam_policy" "mongodb_uri_allow_read" {
@@ -274,7 +277,7 @@ resource "aws_ecs_task_definition" "task_definition" {
 
   container_definitions = jsonencode([
     {
-      name = "${local.name_prefix}-container"
+      name      = "${local.name_prefix}-container"
       image     = "${aws_ecr_repository.ecr_repository.repository_url}:latest"
       essential = true
       portMappings = [

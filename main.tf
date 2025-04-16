@@ -10,21 +10,23 @@ terraform {
 module "ecs_service_dev" {
   source = "./ecs_module"
 
-  aws_profile   = var.aws_profile
-  aws_region    = var.aws_region
-  environment   = "dev"
-  project_name  = var.project_name
-  owner         = var.owner
+  aws_profile  = var.aws_profile
+  aws_region   = var.aws_region
+  environment  = "dev"
+  project_name = var.project_name
+  owner        = var.owner
+  mongodb_uri  = var.mongodb_uri_dev
 }
 
 module "ecs_service_stage" {
   source = "./ecs_module"
 
-  aws_profile   = var.aws_profile
-  aws_region    = var.aws_region
-  environment   = "dev"
-  project_name  = var.project_name
-  owner         = var.owner
+  aws_profile  = var.aws_profile
+  aws_region   = var.aws_region
+  environment  = "dev"
+  project_name = var.project_name
+  owner        = var.owner
+  mongodb_uri  = var.mongodb_uri_stage
 }
 
 # output "ecs_service_dev_public_ip" {

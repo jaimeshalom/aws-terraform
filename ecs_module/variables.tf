@@ -27,3 +27,9 @@ variable "owner" {
   type        = string
   default     = "DevOps"
 }
+
+variable "mongodb_uri" {
+  description = "Cadena de conexión a MongoDB"
+  type        = string
+  default     = "mongodb://localhost:27017"
+}

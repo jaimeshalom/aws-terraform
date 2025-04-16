@@ -33,3 +33,15 @@ variable "server_name" {
   type        = string
   default     = "nginx-server"
 }
+
+variable "mongodb_uri_dev" {
+  description = "Cadena de conexión a MongoDB para desarrollo"
+  type        = string
+  default     = "mongodb://localhost:27017"
+}
+
+variable "mongodb_uri_stage" {
+  description = "Cadena de conexión a MongoDB para pruebas"
+  type        = string
+  default     = "mongodb://localhost:27017"
+}
