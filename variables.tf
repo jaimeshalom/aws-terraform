@@ -39,6 +39,12 @@ variable "image_tag" {
   description = "Etiqueta de la imagen Docker"
 }
 
+variable "environment" {
+  description = "Entorno de despliegue (dev, stage, prod)"
+  type        = string
+  default     = "dev"
+}
+
 variable "mongodb_uri" {
   description = "Cadena de conexión a MongoDB"
   type        = string

@@ -11,7 +11,7 @@ module "ecs_service_dev" {
 
   aws_profile  = var.aws_profile
   aws_region   = var.aws_region
-  environment  = "dev"
+  environment  = var.environment
   project_name = var.project_name
   owner        = var.owner
   mongodb_uri  = var.mongodb_uri
