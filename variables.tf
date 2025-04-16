@@ -34,6 +34,17 @@ variable "server_name" {
   default     = "nginx-server"
 }
 
+variable "image_tag" {
+  type        = string
+  description = "Etiqueta de la imagen Docker"
+}
+
+variable "mongodb_uri" {
+  description = "Cadena de conexión a MongoDB"
+  type        = string
+  default     = "mongodb://localhost:27017"
+}
+
 variable "mongodb_uri_dev" {
   description = "Cadena de conexión a MongoDB para desarrollo"
   type        = string

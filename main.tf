@@ -14,7 +14,8 @@ module "ecs_service_dev" {
   environment  = "dev"
   project_name = var.project_name
   owner        = var.owner
-  mongodb_uri  = var.mongodb_uri_dev
+  mongodb_uri  = var.mongodb_uri
+  ecr_image_tag = var.image_tag
 }
 
 # module "ecs_service_stage" {
