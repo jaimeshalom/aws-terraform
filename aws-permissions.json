@@ -6,12 +6,12 @@
 			"Action": [
 				"*"
 			],
-			"Resource": "arn:aws:iam::*:role/terraform-practice-dev-*"
+			"Resource": "arn:aws:iam::*:role/${aws:PrincipalTag/Project}-${aws:PrincipalTag/Environment}-*"
 		},
 		{
 			"Effect": "Allow",
 			"Action": "iam:PassRole",
-			"Resource": "arn:aws:iam::*:role/terraform-practice-dev-ecs_*",
+			"Resource": "arn:aws:iam::*:role/${aws:PrincipalTag/Project}-${aws:PrincipalTag/Environment}-ecs_*",
 			"Condition": {
 				"StringEquals": {
 					"iam:PassedToService": "ecs-tasks.amazonaws.com"
@@ -24,7 +24,7 @@
 				"iam:CreatePolicy",
 				"iam:TagPolicy"
 			],
-			"Resource": "arn:aws:iam::*:policy/terraform-practice-dev-*",
+			"Resource": "arn:aws:iam::*:policy/${aws:PrincipalTag/Project}-${aws:PrincipalTag/Environment}-*",
 			"Condition": {
 				"StringEquals": {
 					"aws:RequestTag/ManagedBy": "Terraform"
@@ -36,7 +36,7 @@
 			"Action": [
 				"*"
 			],
-			"Resource": "arn:aws:iam::*:policy/terraform-practice-dev-*"
+			"Resource": "arn:aws:iam::*:policy/${aws:PrincipalTag/Project}-${aws:PrincipalTag/Environment}-*"
 		},
 		{
 			"Effect": "Allow",
@@ -46,7 +46,7 @@
 				"secretsmanager:ListSecretVersionIds",
 				"secretsmanager:GetResourcePolicy"
 			],
-			"Resource": "arn:aws:secretsmanager:us-east-1:*:secret:terraform-practice-dev-*"
+			"Resource": "arn:aws:secretsmanager:us-east-1:*:secret:${aws:PrincipalTag/Project}-${aws:PrincipalTag/Environment}-*"
 		},
 		{
 			"Effect": "Allow",
@@ -94,12 +94,14 @@
 				"ec2:DeleteVpc"
 			],
 			"Resource": [
-				"arn:aws:ec2:*:*:vpc/terraform-practice-dev-*",
-				"arn:aws:ec2:*:*:subnet/terraform-practice-dev-*",
-				"arn:aws:ec2:*:*:security-group/terraform-practice-dev-*",
-				"arn:aws:ec2:*:*:route-table/terraform-practice-dev-*",
-				"arn:aws:ec2:*:*:internet-gateway/terraform-practice-dev-*"
-			]
+				"*"
+			],
+			"Condition": {
+				"StringEquals": {
+					"ec2:ResourceTag/Project": "${aws:PrincipalTag/Project}",
+					"ec2:ResourceTag/Environment": "${aws:PrincipalTag/Environment}"
+				}
+			}
 		},
 		{
 			"Effect": "Allow",
@@ -130,9 +132,9 @@
 				"elasticloadbalancing:DeleteLoadBalancer"
 			],
 			"Resource": [
-				"arn:aws:elasticloadbalancing:*:*:loadbalancer/app/terraform-practice-dev-*",
-				"arn:aws:elasticloadbalancing:*:*:targetgroup/terraform-practice-dev-*",
-				"arn:aws:elasticloadbalancing:*:*:listener/app/terraform-practice-dev-*"
+				"arn:aws:elasticloadbalancing:*:*:loadbalancer/app/${aws:PrincipalTag/Project}-${aws:PrincipalTag/Environment}-*",
+				"arn:aws:elasticloadbalancing:*:*:targetgroup/${aws:PrincipalTag/Project}-${aws:PrincipalTag/Environment}-*",
+				"arn:aws:elasticloadbalancing:*:*:listener/app/${aws:PrincipalTag/Project}-${aws:PrincipalTag/Environment}-*"
 			]
 		},
 		{
@@ -159,9 +161,9 @@
 				"ecs:RegisterTaskDefinition"
 			],
 			"Resource": [
-				"arn:aws:ecs:*:*:cluster/terraform-practice-dev-*",
-				"arn:aws:ecs:*:*:service/terraform-practice-dev-*/terraform-practice-dev-*",
-				"arn:aws:ecs:*:*:task-definition/terraform-practice-dev-*"
+				"arn:aws:ecs:*:*:cluster/${aws:PrincipalTag/Project}-${aws:PrincipalTag/Environment}-*",
+				"arn:aws:ecs:*:*:service/${aws:PrincipalTag/Project}-${aws:PrincipalTag/Environment}-*/${aws:PrincipalTag/Project}-${aws:PrincipalTag/Environment}-*",
+				"arn:aws:ecs:*:*:task-definition/${aws:PrincipalTag/Project}-${aws:PrincipalTag/Environment}-*"
 			]
 		},
 		{
@@ -173,7 +175,7 @@
 				"ecr:CreateRepository",
 				"ecr:TagResource"
 			],
-			"Resource": "arn:aws:ecr:*:*:repository/terraform-practice-dev-*"
+			"Resource": "arn:aws:ecr:*:*:repository/${aws:PrincipalTag/Project}-${aws:PrincipalTag/Environment}-*"
 		},
 		{
 			"Effect": "Allow",
@@ -183,7 +185,7 @@
 				"secretsmanager:PutSecretValue",
 				"secretsmanager:DeleteSecret"
 			],
-			"Resource": "arn:aws:secretsmanager:*:*:secret:terraform-practice-dev-*"
+			"Resource": "arn:aws:secretsmanager:*:*:secret:${aws:PrincipalTag/Project}-${aws:PrincipalTag/Environment}-*"
 		},
 		{
 			"Effect": "Allow",
