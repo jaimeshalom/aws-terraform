@@ -58,14 +58,26 @@
 				"ec2:DescribeRouteTables",
 				"ec2:DescribeSecurityGroups",
 				"ec2:DescribeVpcAttribute",
-				"ec2:DescribeNetworkInterfaces",
+				"ec2:DescribeNetworkInterfaces"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
 				"ec2:CreateVpc",
 				"ec2:CreateTags",
 				"ec2:CreateSubnet",
 				"ec2:CreateInternetGateway",
 				"ec2:CreateSecurityGroup",
 				"ec2:CreateRouteTable",
-				"ec2:CreateRoute",
+				"ec2:CreateRoute"
+			],
+			"Resource": "*"
+		},
+		{
+			"Effect": "Allow",
+			"Action": [
 				"ec2:AuthorizeSecurityGroupEgress",
 				"ec2:AuthorizeSecurityGroupIngress",
 				"ec2:AssociateRouteTable",
@@ -81,7 +93,13 @@
 				"ec2:DeleteInternetGateway",
 				"ec2:DeleteVpc"
 			],
-			"Resource": "*"
+			"Resource": [
+				"arn:aws:ec2:*:*:vpc/terraform-practice-dev-*",
+				"arn:aws:ec2:*:*:subnet/terraform-practice-dev-*",
+				"arn:aws:ec2:*:*:security-group/terraform-practice-dev-*",
+				"arn:aws:ec2:*:*:route-table/terraform-practice-dev-*",
+				"arn:aws:ec2:*:*:internet-gateway/terraform-practice-dev-*"
+			]
 		},
 		{
 			"Effect": "Allow",
