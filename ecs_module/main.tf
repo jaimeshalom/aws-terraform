@@ -169,7 +169,7 @@ resource "aws_alb" "alb" {
 
 resource "aws_lb_target_group" "tg" {
   name        = "${local.name_prefix}-tg"
-  port        = 80
+  port        = 3000
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = aws_vpc.vpc.id
@@ -363,7 +363,7 @@ resource "aws_ecs_service" "service" {
   load_balancer {
     target_group_arn = aws_lb_target_group.tg.arn
     container_name   = "${local.name_prefix}-container"
-    container_port   = 80
+    container_port   = 3000
   }
 
   tags = merge(local.common_tags, {
