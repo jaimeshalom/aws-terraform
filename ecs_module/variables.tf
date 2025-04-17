@@ -45,3 +45,21 @@ variable "git_version_tag" {
   type        = string
   default     = "unknown"
 }
+
+variable "ecs_task_memory" {
+  description = "Cantidad de memoria (en MiB) para asignar a la tarea ECS."
+  type        = number
+  default     = 512 # O el valor que necesites
+}
+
+variable "ecs_task_cpu" {
+  description = "Cantidad de CPU (en unidades de CPU) para asignar a la tarea ECS (256 = 0.25 vCPU)."
+  type        = number
+  default     = 256 # O el valor que necesites
+}
+
+variable "ecs_service_desired_count" {
+  description = "Número deseado de instancias de la tarea a ejecutar."
+  type        = number
+  default     = 1
+}
