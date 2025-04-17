@@ -59,7 +59,8 @@
 				"ec2:DescribeSecurityGroups",
 				"ec2:DescribeVpcAttribute",
 				"ec2:DescribeNetworkInterfaces",
-				"ec2:DescribeVpcEndpoints"
+				"ec2:DescribeVpcEndpoints",
+				"ec2:DescribePrefixLists"
 			],
 			"Resource": "*"
 		},
