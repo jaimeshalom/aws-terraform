@@ -274,6 +274,16 @@ resource "aws_iam_policy_attachment" "attach_mongodb_uri_allow_read" {
 }
 
 // ECS Task Definition
+resource "aws_cloudwatch_log_group" "ecs_log_group" {
+  name = "/ecs/${local.name_prefix}"
+
+  retention_in_days = 14
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-ecs_log_group"
+  })
+}
+
 resource "aws_ecs_task_definition" "task_definition" {
   family                   = "${local.name_prefix}-task_definition"
   network_mode             = "awsvpc" # add the AWS VPN network mode as this is required for Fargate
@@ -307,7 +317,7 @@ resource "aws_ecs_task_definition" "task_definition" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group         = "/ecs/${local.name_prefix}"
+          awslogs-group         = aws_cloudwatch_log_group.ecs_log_group.name
           awslogs-region        = var.aws_region
           awslogs-stream-prefix = "ecs"
         }
@@ -316,8 +326,8 @@ resource "aws_ecs_task_definition" "task_definition" {
   ])
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-task_definition"
-    GitVersion  = var.git_version_tag
+    Name       = "${local.name_prefix}-task_definition"
+    GitVersion = var.git_version_tag
   })
 }
 
@@ -376,8 +386,8 @@ resource "aws_ecs_service" "service" {
   }
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-service"
-     GitVersion  = var.git_version_tag
+    Name       = "${local.name_prefix}-service"
+    GitVersion = var.git_version_tag
   })
 }
 

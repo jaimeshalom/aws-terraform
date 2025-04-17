@@ -194,6 +194,26 @@
 				"kms:RetireGrant"
 			],
 			"Resource": "*"
-		}
+		},
+        {
+            "Sid": "AllowDescribeLogGroupsForDiscovery",
+            "Effect": "Allow",
+            "Action": "logs:DescribeLogGroups",
+            "Resource": "arn:aws:logs:*:*:log-group:*"
+        },
+        {
+            "Sid": "AllowManageSpecificECSLogGroup",
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:PutRetentionPolicy",
+                "logs:DeleteLogGroup",
+                "logs:TagResource",
+                "logs:UntagResource",
+                "logs:ListTagsLogGroup",
+				"logs:ListTagsForResource"
+            ],
+            "Resource": "arn:aws:logs:*:*:log-group:/ecs/${aws:PrincipalTag/Project}-${aws:PrincipalTag/Environment}*"
+        }
 	]
 }
