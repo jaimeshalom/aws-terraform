@@ -23,9 +23,9 @@ variable "project_name" {
 }
 
 variable "owner" {
-  description = "Responsable del recurso (equipo o individuo)"
+  description = "Responsable del recurso (equipo o individuo), si no se especifica se extrae del usuario aws del llamador"
   type        = string
-  default     = "DevOps"
+  default     = null
 }
 
 variable "mongodb_uri" {

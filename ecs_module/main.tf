@@ -3,7 +3,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "5.94.1"
+      version = "~> 5.0"
     }
   }
 
@@ -17,13 +17,19 @@ provider "aws" {
 
 data "aws_availability_zones" "available" {}
 
+data "aws_caller_identity" "current" {}
+
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
+
+  caller_arn      = data.aws_caller_identity.current.arn
+  caller_username = regex(".*/(.*)", local.caller_arn)[0]
+  effective_owner = coalesce(var.owner, local.caller_username)
 
   common_tags = {
     Environment = var.environment
     Project     = var.project_name
-    Owner       = var.owner
+    Owner       = local.effective_owner
     ManagedBy   = "Terraform"
   }
 }
