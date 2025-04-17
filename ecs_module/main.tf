@@ -157,7 +157,7 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
   vpc_id              = aws_vpc.vpc.id
   service_name        = "com.amazonaws.${var.aws_region}.ecr.dkr"
   vpc_endpoint_type   = "Interface"
-  private_dns_enabled = true
+  private_dns_enabled = false
 
   subnet_ids = aws_subnet.subnets.*.id
 
