@@ -485,19 +485,6 @@ resource "aws_ecs_task_definition" "task_definition" {
     Name       = "${local.name_prefix}-task_definition"
     GitVersion = var.git_version_tag # Etiqueta pasada desde GHA
   })
-
-  # # Para forzar una nueva revisión de la tarea en cada apply si la imagen cambia
-  # lifecycle {
-  #   replace_triggered_by = [
-  #     # Vuelve a calcular el json si la imagen cambia
-  #     aws_ecr_repository.ecr_repository.repository_url,
-  #     var.ecr_image_tag,
-  #   ]
-  #   ignore_changes = [
-  #     # Ignorar cambios externos en tags si no los gestionas aquí
-  #     tags,
-  #   ]
-  # }
 }
 
 # ECS Cluster
