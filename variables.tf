@@ -37,6 +37,7 @@ variable "server_name" {
 variable "image_tag" {
   type        = string
   description = "Etiqueta de la imagen Docker"
+  default     = "latest"
 }
 
 variable "environment" {
