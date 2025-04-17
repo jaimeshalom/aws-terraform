@@ -22,17 +22,17 @@ variable "owner" {
   default     = null
 }
 
-variable "ami_id" {
-  description = "ID de la AMI a utilizar"
-  type        = string
-  default     = "ami-0440d3b780d96b29d"
-}
+# variable "ami_id" {
+#   description = "ID de la AMI a utilizar"
+#   type        = string
+#   default     = "ami-0440d3b780d96b29d"
+# }
 
-variable "server_name" {
-  description = "Nombre del servidor"
-  type        = string
-  default     = "nginx-server"
-}
+# variable "server_name" {
+#   description = "Nombre del servidor"
+#   type        = string
+#   default     = "nginx-server"
+# }
 
 variable "image_tag" {
   type        = string
@@ -58,14 +58,32 @@ variable "mongodb_uri" {
   default     = "mongodb://localhost:27017"
 }
 
-variable "mongodb_uri_dev" {
-  description = "Cadena de conexión a MongoDB para desarrollo"
-  type        = string
-  default     = "mongodb://localhost:27017"
+# variable "mongodb_uri_dev" {
+#   description = "Cadena de conexión a MongoDB para desarrollo"
+#   type        = string
+#   default     = "mongodb://localhost:27017"
+# }
+
+# variable "mongodb_uri_stage" {
+#   description = "Cadena de conexión a MongoDB para pruebas"
+#   type        = string
+#   default     = "mongodb://localhost:27017"
+# }
+
+variable "ecs_task_memory" {
+  description = "Cantidad de memoria (en MiB) para asignar a la tarea ECS."
+  type        = number
+  default     = 512 # O el valor que necesites
 }
 
-variable "mongodb_uri_stage" {
-  description = "Cadena de conexión a MongoDB para pruebas"
-  type        = string
-  default     = "mongodb://localhost:27017"
+variable "ecs_task_cpu" {
+  description = "Cantidad de CPU (en unidades de CPU) para asignar a la tarea ECS (256 = 0.25 vCPU)."
+  type        = number
+  default     = 256 # O el valor que necesites
+}
+
+variable "ecs_service_desired_count" {
+  description = "Número deseado de instancias de la tarea a ejecutar."
+  type        = number
+  default     = 1
 }
