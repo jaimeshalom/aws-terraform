@@ -6,7 +6,7 @@ terraform {
   }
 }
 
-module "ecs_service_dev" {
+module "ecs_service" {
   source = "./ecs_module"
 
   aws_profile     = var.aws_profile
