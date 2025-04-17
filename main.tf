@@ -1,21 +1,22 @@
 terraform {
   backend "s3" {
-    bucket  = "tfstate-terraform-practice-afda234234asw34gfer35"
-    key     = "terraform/terraform-practice.tfstate"
-    region  = "us-east-1"
+    bucket = "tfstate-terraform-practice-afda234234asw34gfer35"
+    key    = "terraform/terraform-practice.tfstate"
+    region = "us-east-1"
   }
 }
 
 module "ecs_service_dev" {
   source = "./ecs_module"
 
-  aws_profile  = var.aws_profile
-  aws_region   = var.aws_region
-  environment  = var.environment
-  project_name = var.project_name
-  owner        = var.owner
-  mongodb_uri  = var.mongodb_uri
-  ecr_image_tag = var.image_tag
+  aws_profile     = var.aws_profile
+  aws_region      = var.aws_region
+  environment     = var.environment
+  project_name    = var.project_name
+  owner           = var.owner
+  mongodb_uri     = var.mongodb_uri
+  ecr_image_tag   = var.image_tag
+  git_version_tag = var.git_version_tag
 }
 
 # module "ecs_service_stage" {

@@ -40,6 +40,12 @@ variable "image_tag" {
   default     = "latest"
 }
 
+variable "git_version_tag" {
+  description = "The semantic version tag from Git (e.g., v1.2.3)"
+  type        = string
+  default     = "unknown"
+}
+
 variable "environment" {
   description = "Entorno de despliegue (dev, stage, prod)"
   type        = string

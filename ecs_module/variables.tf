@@ -39,3 +39,9 @@ variable "ecr_image_tag" {
   type        = string
   default     = "latest"
 }
+
+variable "git_version_tag" {
+  description = "The semantic version tag from Git (e.g., v1.2.3)"
+  type        = string
+  default     = "unknown"
+}

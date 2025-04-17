@@ -317,6 +317,7 @@ resource "aws_ecs_task_definition" "task_definition" {
 
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-task_definition"
+    GitVersion  = var.git_version_tag
   })
 }
 
@@ -376,6 +377,7 @@ resource "aws_ecs_service" "service" {
 
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-service"
+     GitVersion  = var.git_version_tag
   })
 }
 
