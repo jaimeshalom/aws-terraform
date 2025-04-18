@@ -87,3 +87,9 @@ variable "ecs_service_desired_count" {
   type        = number
   default     = 1
 }
+
+variable "domain_name" {
+  description = "El nombre de dominio completo para la aplicación (ej. app.ejemplo.com)"
+  type        = string
+  # No poner un default aquí, debe pasarse como variable
+}

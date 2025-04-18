@@ -20,6 +20,7 @@ module "ecs_service" {
   ecs_service_desired_count = var.ecs_service_desired_count
   ecs_task_cpu              = var.ecs_task_cpu
   ecs_task_memory           = var.ecs_task_memory
+  domain_name               = var.domain_name
 }
 
 # module "ecs_service_stage" {
@@ -51,3 +52,8 @@ module "ecs_service" {
 #   description = "Public DNS of the EC2 instance"
 #   value       = module.ecs_service_stage.aws_instance_public_dns
 # }
+
+output "app_url" {
+  description = "URL pública del Application Load Balancer"
+  value       = module.ecs_service.app_url
+}

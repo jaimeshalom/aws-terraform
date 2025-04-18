@@ -297,7 +297,7 @@ resource "aws_iam_role" "ecs_task_role" {
 # =========================================
 resource "aws_security_group" "alb_sg" {
   name        = "${local.name_prefix}-alb_sg"
-  description = "Allow HTTP inbound from anywhere to ALB"
+  description = "Allow HTTP and HTTPS inbound from anywhere to ALB"
   vpc_id      = aws_vpc.vpc.id
 
   ingress {
@@ -306,6 +306,14 @@ resource "aws_security_group" "alb_sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -353,24 +361,50 @@ resource "aws_lb_target_group" "tg" {
   })
 }
 
-resource "aws_lb_listener" "lb_listener" {
+resource "aws_lb_listener" "http_listener_redirect" {
   load_balancer_arn = aws_alb.alb.arn
   port              = "80"
   protocol          = "HTTP"
 
   default_action {
+    type = "redirect"
+
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301" # Redirección permanente
+    }
+  }
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-http_listener_redirect"
+  })
+}
+
+resource "aws_lb_listener" "https_listener" {
+  load_balancer_arn = aws_alb.alb.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-2016-08" # Política de seguridad TLS recomendada
+  certificate_arn   = aws_acm_certificate.cert.arn # Usa el ARN del certificado creado/referenciado
+  # Si se uso la variable opcional acm_certificate_arn:
+  # certificate_arn = var.acm_certificate_arn != null ? var.acm_certificate_arn : aws_acm_certificate.cert[0].arn
+
+  # La acción por defecto es enviar el tráfico al Target Group
+  default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.tg.arn
   }
 
-  # Considerar añadir un listener HTTPS en el puerto 443 con un certificado ACM
-  # para una conexión segura.
-
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-lb_listener"
+    Name = "${local.name_prefix}-https_listener"
   })
-}
 
+  # Asegura que el listener HTTP (que ahora depende del https para la redirección implícita)
+  # y el certificado estén listos.
+  # La dependencia del certificado es implícita por usar su ARN.
+  depends_on = [aws_lb_listener.http_listener] # Asegura que el listener http exista
+}
 
 # =========================================
 # Elastic Container Registry (ECR)
@@ -558,7 +592,7 @@ resource "aws_ecs_service" "service" {
   }
 
   # Asegura que el servicio espere a que el ALB esté listo
-  depends_on = [aws_lb_listener.lb_listener]
+  depends_on = [aws_lb_listener.https_listener]
 
   # Opciones de despliegue (rolling update es el predeterminado)
   # deployment_controller {
@@ -581,11 +615,58 @@ resource "aws_ecs_service" "service" {
 }
 
 # =========================================
+# Certificate Manager (ACM)
+# =========================================
+
+# Descomenta y usa 'data' si el certificado YA EXISTE y está VALIDADO en ACM
+# data "aws_acm_certificate" "cert" {
+#   domain   = var.domain_name
+#   statuses = ["ISSUED"] # Asegura que solo coja certificados válidos
+#   most_recent = true     # Coge el más reciente si hay varios
+# }
+
+# Usa 'resource' para solicitar un NUEVO certificado
+resource "aws_acm_certificate" "cert" {
+  # count = var.acm_certificate_arn == null ? 1 : 0 # Descomenta si usas la variable opcional de arriba
+  domain_name       = var.domain_name
+  validation_method = "DNS" # O "EMAIL" si prefieres validación por email
+
+  # Añade SANs (Subject Alternative Names) si necesitas cubrir subdominios como www
+  # subject_alternative_names = ["www.${var.domain_name}"]
+
+  tags = merge(local.common_tags, {
+    Name = "${var.domain_name}-certificate"
+  })
+
+  lifecycle {
+    create_before_destroy = true # Útil para rotación de certificados si se gestiona con Terraform
+  }
+}
+
+# NOTA IMPORTANTE SOBRE LA VALIDACIÓN:
+# Si usas validation_method = "DNS", después del 'terraform apply' inicial,
+# tendrás que ir a la consola de ACM o usar la AWS CLI para obtener los registros
+# CNAME que necesitas añadir a tu proveedor de DNS para validar el dominio.
+# Terraform NO completará el 'apply' del listener HTTPS hasta que el certificado
+# tenga el estado 'ISSUED'.
+#
+# Para automatizar la validación DNS con Terraform, necesitarías:
+# 1. Que tu zona DNS esté gestionada en AWS Route 53.
+# 2. Usar los recursos 'aws_route53_record' y 'aws_acm_certificate_validation'.
+# Esto está fuera del alcance de esta modificación básica, pero es la forma recomendada
+# para una automatización completa.
+
+# =========================================
 # Outputs
 # =========================================
 output "app_url" {
   description = "URL pública del Application Load Balancer"
   value       = aws_alb.alb.dns_name
+}
+
+output "app_url" {
+  description = "URL pública HTTPS de la aplicación"
+  value       = "https://${var.domain_name}"
 }
 
 output "ecr_repository_url" {
