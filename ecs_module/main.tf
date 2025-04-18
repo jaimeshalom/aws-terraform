@@ -48,19 +48,21 @@ resource "aws_vpc" "vpc" {
   })
 }
 
+# Subredes PÚBLICAS en cada AZ disponible
 resource "aws_subnet" "subnets" {
   # count                 = 3 # Considera usar length(data.aws_availability_zones.available.names) si se quiere usar todas las AZs disponibles
   count                   = length(data.aws_availability_zones.available.names)
   vpc_id                  = aws_vpc.vpc.id
   cidr_block              = cidrsubnet(aws_vpc.vpc.cidr_block, 8, count.index)
-  map_public_ip_on_launch = true # Las tareas Fargate necesitarán acceso a internet o VPC endpoints
+  map_public_ip_on_launch = true
   availability_zone       = element(data.aws_availability_zones.available.names, count.index)
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-public_subnet-${count.index}"
+    Name = "${local.name_prefix}-public-subnet-${count.index}"
   })
 }
 
+# Internet Gateway para permitir acceso a/desde internet
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.vpc.id
 
@@ -69,138 +71,33 @@ resource "aws_internet_gateway" "igw" {
   })
 }
 
+# Tabla de Rutas para las subredes públicas
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.vpc.id
 
+  # Ruta por defecto hacia el Internet Gateway
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.igw.id
   }
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-public_rt"
+    Name = "${local.name_prefix}-public-rt"
   })
 }
 
+# Asociar la tabla de rutas pública a TODAS las subredes creadas
 resource "aws_route_table_association" "public" {
   count          = length(aws_subnet.subnets)
   subnet_id      = aws_subnet.subnets[count.index].id
   route_table_id = aws_route_table.public.id
 }
 
-# --- VPC Endpoints ---
-# Security Group para los Endpoints de Interfaz
-resource "aws_security_group" "vpc_endpoint_sg" {
-  name        = "${local.name_prefix}-vpc-endpoint-sg"
-  description = "Allow TLS traffic to VPC endpoints from within the VPC"
-  vpc_id      = aws_vpc.vpc.id
-
-  # Permitir tráfico HTTPS ENTRANTE desde la VPC hacia el endpoint
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.vpc.cidr_block] # Permite desde cualquier IP dentro de la VPC
-  }
-
-  # Permitir TODO el tráfico SALIENTE desde los endpoints
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-vpc-endpoint-sg"
-  })
-}
-
-# Endpoint de INTERFAZ para Secrets Manager
-resource "aws_vpc_endpoint" "secrets_manager" {
-  vpc_id              = aws_vpc.vpc.id
-  service_name        = "com.amazonaws.${var.aws_region}.secretsmanager"
-  vpc_endpoint_type   = "Interface"
-  private_dns_enabled = true
-
-  subnet_ids = aws_subnet.subnets.*.id
-
-  security_group_ids = [
-    aws_security_group.vpc_endpoint_sg.id,
-  ]
-
-  tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-secretsmanager-vpce"
-  })
-}
-
-# Endpoint de INTERFAZ para ECR API
-resource "aws_vpc_endpoint" "ecr_api" {
-  vpc_id              = aws_vpc.vpc.id
-  service_name        = "com.amazonaws.${var.aws_region}.ecr.api"
-  vpc_endpoint_type   = "Interface"
-  private_dns_enabled = true
-
-  subnet_ids = aws_subnet.subnets.*.id
-
-  security_group_ids = [
-    aws_security_group.vpc_endpoint_sg.id,
-  ]
-
-  tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-ecr-api-vpce"
-  })
-}
-
-# Endpoint de INTERFAZ para ECR Docker Registry
-resource "aws_vpc_endpoint" "ecr_dkr" {
-  vpc_id              = aws_vpc.vpc.id
-  service_name        = "com.amazonaws.${var.aws_region}.ecr.dkr"
-  vpc_endpoint_type   = "Interface"
-  private_dns_enabled = false
-
-  subnet_ids = aws_subnet.subnets.*.id
-
-  security_group_ids = [
-    aws_security_group.vpc_endpoint_sg.id,
-  ]
-
-  tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-ecr-dkr-vpce"
-  })
-}
-
-# Endpoint de INTERFAZ para CloudWatch Logs
-resource "aws_vpc_endpoint" "logs" {
-  vpc_id              = aws_vpc.vpc.id
-  service_name        = "com.amazonaws.${var.aws_region}.logs"
-  vpc_endpoint_type   = "Interface"
-  private_dns_enabled = true
-
-  subnet_ids = aws_subnet.subnets.*.id
-
-  security_group_ids = [
-    aws_security_group.vpc_endpoint_sg.id,
-  ]
-
-  tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-logs-vpce"
-  })
-}
-
-# Endpoint de GATEWAY para S3 (Requerido por ECR)
-resource "aws_vpc_endpoint" "s3" {
-  vpc_id            = aws_vpc.vpc.id
-  service_name      = "com.amazonaws.${var.aws_region}.s3"
-  vpc_endpoint_type = "Gateway"
-
-  # Asociar con las tablas de rutas de las subredes donde se ejecutarán las tareas
-  route_table_ids = [aws_route_table.public.id]
-
-  tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-s3-vpce"
-  })
-}
+# --- SECCIÓN DE VPC ENDPOINTS ELIMINADA ---
+# Al usar subredes públicas con un IGW y asignar IPs públicas a las tareas Fargate,
+# las tareas pueden acceder a los servicios de AWS (ECR, Secrets Manager, CloudWatch Logs)
+# a través de sus endpoints públicos estándar, eliminando la necesidad de VPC Endpoints
+# y reduciendo significativamente los costos de red.
 
 
 # =========================================
@@ -296,7 +193,7 @@ resource "aws_iam_role" "ecs_task_role" {
 # Application Load Balancer (ALB)
 # =========================================
 resource "aws_security_group" "alb_sg" {
-  name        = "${local.name_prefix}-alb_sg"
+  name        = "${local.name_prefix}-alb-sg"
   description = "Allow HTTP and HTTPS inbound from anywhere to ALB"
   vpc_id      = aws_vpc.vpc.id
 
@@ -322,7 +219,7 @@ resource "aws_security_group" "alb_sg" {
   }
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-alb_sg"
+    Name = "${local.name_prefix}-alb-sg"
   })
 }
 
@@ -330,10 +227,8 @@ resource "aws_alb" "alb" {
   name               = "${local.name_prefix}-alb"
   load_balancer_type = "application"
   internal           = false
-
-  subnets = aws_subnet.subnets.*.id # El ALB necesita estar en subredes públicas para ser accesible desde internet
-
-  security_groups = [aws_security_group.alb_sg.id]
+  subnets            = aws_subnet.subnets.*.id
+  security_groups    = [aws_security_group.alb_sg.id]
 
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-alb"
@@ -344,7 +239,7 @@ resource "aws_lb_target_group" "tg" {
   name        = "${local.name_prefix}-tg"
   port        = 3000 # Puerto donde escucha tu contenedor ECS
   protocol    = "HTTP"
-  target_type = "ip" # Requerido para Fargate con awsvpc
+  target_type = "ip"
   vpc_id      = aws_vpc.vpc.id
 
   health_check {
@@ -377,7 +272,7 @@ resource "aws_lb_listener" "http_listener_redirect" {
   }
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-http_listener_redirect"
+    Name = "${local.name_prefix}-http-listener-redirect"
   })
 }
 
@@ -398,13 +293,10 @@ resource "aws_lb_listener" "https_listener" {
   }
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-https_listener"
+    Name = "${local.name_prefix}-https-listener"
   })
 
-  # Asegura que el listener HTTP (que ahora depende del https para la redirección implícita)
-  # y el certificado estén listos.
-  # La dependencia del certificado es implícita por usar su ARN.
-  depends_on = [aws_lb_listener.http_listener_redirect] # Asegura que el listener http exista
+  depends_on = [aws_lb_listener.http_listener_redirect]
 }
 
 # =========================================
@@ -458,10 +350,10 @@ resource "aws_secretsmanager_secret_version" "mongodb_uri_version" {
 resource "aws_cloudwatch_log_group" "ecs_log_group" {
   name = "/ecs/${local.name_prefix}"
 
-  retention_in_days = 14 # Ajusta según necesidad
+  retention_in_days = 14 # Ajustar según necesidad
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-ecs-log-group" # Etiqueta actualizada
+    Name = "${local.name_prefix}-ecs-log-group"
   })
 }
 
@@ -539,18 +431,18 @@ resource "aws_ecs_cluster" "cluster" {
 
 # Security Group para las tareas ECS
 resource "aws_security_group" "ecs_sg" {
-  name        = "${local.name_prefix}-ecs_sg"
+  name        = "${local.name_prefix}-ecs-sg"
   description = "Allow traffic from ALB to ECS tasks"
   vpc_id      = aws_vpc.vpc.id
 
   # Permitir tráfico entrante SOLO desde el Security Group del ALB en el puerto 3000
   ingress {
-    from_port       = 3000 # Puerto de tu contenedor
+    from_port       = 3000 # Puerto del contenedor
     to_port         = 3000
     protocol        = "tcp"
     security_groups = [aws_security_group.alb_sg.id] # ¡MUY IMPORTANTE! Solo el ALB puede entrar
   }
-  # Permitir TODO el tráfico saliente (necesario para VPC Endpoints, ECR, Mongo (si es externo), etc.)
+  # El tráfico saliente usará el IGW de las subredes públicas
   egress {
     from_port   = 0
     to_port     = 0
@@ -559,7 +451,7 @@ resource "aws_security_group" "ecs_sg" {
   }
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-ecs_sg"
+    Name = "${local.name_prefix}-ecs-sg"
   })
 }
 
@@ -576,13 +468,11 @@ resource "aws_ecs_service" "service" {
   network_configuration {
     # Las tareas necesitan este SG para comunicarse y ser alcanzadas por el ALB
     security_groups = [aws_security_group.ecs_sg.id]
-    # Especifica las subredes donde se lanzarán las tareas
+    # Usa las subredes públicas creadas
     subnets = aws_subnet.subnets.*.id
-    # 'assign_public_ip = true' es necesario si usas subredes públicas y NO tienes NAT Gateway
-    # pero SÍ tienes IGW y necesitas acceso saliente a internet (además de endpoints).
-    # Si usas subredes privadas + NAT Gateway, esto sería 'false'.
-    # Si SOLO usas VPC Endpoints para TODO, podría ser 'false'.
-    assign_public_ip = true # Requerido para que Fargate descargue la imagen/hable con servicios si no hay NAT y los endpoints no cubren todo
+    # CRÍTICO: Asignar IP pública para que las tareas en subredes públicas
+    # puedan usar el IGW para acceder a ECR, Secrets Manager, etc.
+    assign_public_ip = true
   }
 
   # Conectar el servicio con el ALB
@@ -616,7 +506,7 @@ resource "aws_ecs_service" "service" {
 }
 
 # =========================================
-# Certificate Manager (ACM)
+# Certificate Manager (ACM) & Route 53
 # =========================================
 
 # Descomenta y usa 'data' si el certificado YA EXISTE y está VALIDADO en ACM
@@ -640,7 +530,7 @@ resource "aws_acm_certificate" "cert" {
   })
 
   lifecycle {
-    create_before_destroy = true # Útil para rotación de certificados si se gestiona con Terraform
+    create_before_destroy = true
   }
 }
 
