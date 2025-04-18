@@ -232,7 +232,12 @@
         },
         {
             "Effect": "Allow",
-            "Action": "route53:ListHostedZones",
+            "Action": [
+				"route53:ListHostedZones",
+				"route53:ListHostedZonesByName",
+				"route53:ListTagsForResource",
+				"route53:ListResourceRecordSets"
+			],
             "Resource": "*"
         },
         {
@@ -243,9 +248,10 @@
         {
             "Effect": "Allow",
             "Action": [
-				"route53:ChangeResourceRecordSets"
+				"route53:ChangeResourceRecordSets",
+				"route53:GetHostedZone"
 			],
-            "Resource": "arn:aws:route53:::hostedzone/<ID_DE_TU_ZONA_HOSTED>"
+            "Resource": "arn:aws:route53:::hostedzone/Z05733023S3AADOASNY29"
         }
 	]
 }
