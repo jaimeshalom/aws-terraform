@@ -660,13 +660,13 @@ resource "aws_acm_certificate" "cert" {
 data "aws_route53_zone" "zone" {
   # Asegúrate de que el nombre coincida EXACTAMENTE con tu zona en Route 53
   # incluyendo el punto al final.
-  name         = "apunted.space."
+  name         = var.route53_zone_name
   private_zone = false
 }
 
 resource "aws_route53_record" "app_dns" {
   zone_id = data.aws_route53_zone.zone.zone_id # Usa el data source de tu zona
-  name    = var.domain_name                    # Debe ser 'api-dev.apunted.space'
+  name    = var.domain_name                    # Debe ser algo como 'api.midominio.com' en donde midominio.com corresponde a la route53_zone_name
   type    = "A"                                # Registro tipo A para IPv4
 
   alias {

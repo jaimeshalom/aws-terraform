@@ -93,3 +93,16 @@ variable "domain_name" {
   type        = string
   # No poner un default aquí, debe pasarse como variable
 }
+
+variable "route53_zone_name" {
+  description = "El nombre de la zona hospedada pública en Route 53 (incluyendo el punto final, ej: 'midominio.com.')."
+  type        = string
+  # No añadas un 'default' si quieres que sea obligatorio proporcionar este valor.
+
+  # Validación opcional pero muy recomendada para asegurar el formato correcto:
+  validation {
+    # Asegura que el nombre de la zona termine con un punto.
+    condition     = endswith(var.route53_zone_name, ".")
+    error_message = "El valor de route53_zone_name debe terminar con un punto (.). Ejemplo: 'midominio.com.'."
+  }
+}

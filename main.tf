@@ -21,6 +21,7 @@ module "ecs_service" {
   ecs_task_cpu              = var.ecs_task_cpu
   ecs_task_memory           = var.ecs_task_memory
   domain_name               = var.domain_name
+  route53_zone_name         = var.route53_zone_name
 }
 
 # module "ecs_service_stage" {
