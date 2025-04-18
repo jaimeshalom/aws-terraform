@@ -664,6 +664,31 @@ data "aws_route53_zone" "zone" {
   private_zone = false
 }
 
+resource "aws_route53_record" "app_dns" {
+  zone_id = data.aws_route53_zone.zone.zone_id # Usa el data source de tu zona
+  name    = var.domain_name                    # Debe ser 'api-dev.apunted.space'
+  type    = "A"                                # Registro tipo A para IPv4
+
+  alias {
+    name                   = aws_alb.alb.dns_name               # DNS name del ALB
+    zone_id                = aws_alb.alb.zone_id                # Zone ID del ALB
+    evaluate_target_health = true                               # Recomendado: Route 53 comprueba la salud del ALB
+  }
+}
+
+# Opcional: Si también quieres soportar IPv6 (requiere que el ALB tenga dualstack habilitado, que es el default)
+resource "aws_route53_record" "app_dns_ipv6" {
+  zone_id = data.aws_route53_zone.zone.zone_id
+  name    = var.domain_name
+  type    = "AAAA" # Registro tipo AAAA para IPv6
+
+  alias {
+    name                   = aws_alb.alb.dns_name
+    zone_id                = aws_alb.alb.zone_id
+    evaluate_target_health = true
+  }
+}
+
 # Crea los registros DNS necesarios para la validación
 resource "aws_route53_record" "cert_validation" {
   # Necesitamos un registro por cada dominio a validar (principal + SANs)
