@@ -403,7 +403,7 @@ resource "aws_lb_listener" "https_listener" {
   # Asegura que el listener HTTP (que ahora depende del https para la redirección implícita)
   # y el certificado estén listos.
   # La dependencia del certificado es implícita por usar su ARN.
-  depends_on = [aws_lb_listener.http_listener] # Asegura que el listener http exista
+  depends_on = [aws_lb_listener.http_listener_redirect] # Asegura que el listener http exista
 }
 
 # =========================================
