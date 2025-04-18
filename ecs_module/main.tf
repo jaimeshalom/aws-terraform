@@ -659,7 +659,7 @@ resource "aws_acm_certificate" "cert" {
 # =========================================
 # Outputs
 # =========================================
-output "app_url" {
+output "alb_app_url" {
   description = "URL pública del Application Load Balancer"
   value       = aws_alb.alb.dns_name
 }

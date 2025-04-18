@@ -53,7 +53,12 @@ module "ecs_service" {
 #   value       = module.ecs_service_stage.aws_instance_public_dns
 # }
 
-output "app_url" {
+output "alb_app_url" {
   description = "URL pública del Application Load Balancer"
+  value       = module.ecs_service.alb_app_url
+}
+
+output "app_url" {
+  description = "URL pública HTTPS de la aplicación"
   value       = module.ecs_service.app_url
 }
