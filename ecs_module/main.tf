@@ -386,7 +386,8 @@ resource "aws_lb_listener" "https_listener" {
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-2016-08" # Política de seguridad TLS recomendada
-  certificate_arn   = aws_acm_certificate.cert.arn # Usa el ARN del certificado creado/referenciado
+  # ¡IMPORTANTE! Usa el ARN del recurso de VALIDACIÓN, no del certificado directamente
+  certificate_arn   = aws_acm_certificate_validation.cert_validation_wait.certificate_arn
   # Si se uso la variable opcional acm_certificate_arn:
   # certificate_arn = var.acm_certificate_arn != null ? var.acm_certificate_arn : aws_acm_certificate.cert[0].arn
 
@@ -655,6 +656,44 @@ resource "aws_acm_certificate" "cert" {
 # 2. Usar los recursos 'aws_route53_record' y 'aws_acm_certificate_validation'.
 # Esto está fuera del alcance de esta modificación básica, pero es la forma recomendada
 # para una automatización completa.
+
+data "aws_route53_zone" "zone" {
+  # Asegúrate de que el nombre coincida EXACTAMENTE con tu zona en Route 53
+  # incluyendo el punto al final.
+  name         = "apunted.space."
+  private_zone = false
+}
+
+# Crea los registros DNS necesarios para la validación
+resource "aws_route53_record" "cert_validation" {
+  # Necesitamos un registro por cada dominio a validar (principal + SANs)
+  # Usamos for_each sobre las opciones de validación que provee el certificado
+  for_each = {
+    for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+
+  allow_overwrite = true # Permite sobrescribir registros CNAME preexistentes si es necesario
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60 # TTL bajo para validación rápida
+  type            = each.value.type
+  zone_id         = data.aws_route53_zone.zone.zone_id # ID de tu zona hospedada
+}
+
+# Este recurso ESPERA hasta que AWS confirme que la validación DNS tuvo éxito
+resource "aws_acm_certificate_validation" "cert_validation_wait" {
+  certificate_arn         = aws_acm_certificate.cert.arn
+  validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
+
+  # Puedes ajustar el tiempo de espera si es necesario
+  # timeouts {
+  #   create = "15m"
+  # }
+}
 
 # =========================================
 # Outputs
