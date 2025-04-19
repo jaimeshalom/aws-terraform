@@ -185,6 +185,34 @@ resource "aws_iam_role" "ecs_task_role" {
   })
 }
 
+# --- Política para leer el secreto de CREDENCIALES de MongoDB ---
+resource "aws_iam_policy" "mongodb_credentials_allow_read" {
+  name        = "${local.name_prefix}-mongodb_credentials_allow_read"
+  description = "Permite leer el secreto de credenciales de MongoDB (para la tarea Mongo)"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action   = ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"]
+        Effect   = "Allow"
+        Resource = aws_secretsmanager_secret.mongodb_credentials.arn #secreto
+      }
+    ]
+  })
+  tags = merge(local.common_tags, { Name = "${local.name_prefix}-mongodb_credentials_allow_read" })
+}
+
+# --- Adjuntar la política de lectura del secreto de CREDENCIALES al rol de ejecución ---
+resource "aws_iam_role_policy_attachment" "attach_mongodb_credentials_allow_read" {
+  role       = aws_iam_role.ecs_task_execution_role.name
+  policy_arn = aws_iam_policy.mongodb_credentials_allow_read.arn
+}
+
+# ... (aws_iam_role.ecs_task_role se mantiene igual) ...
+# Nota: Si tu aplicación necesita permisos específicos para interactuar con MongoDB
+# (más allá de la conexión inicial), deberías añadirlos al 'ecs_task_role'.
+# Normalmente, la autenticación se maneja a nivel de driver/conexión.
+
 # NOTA: Aquí se debería adjuntar políticas al 'ecs_task_role' si la aplicación
 # necesita interactuar con otros servicios AWS (ej. S3, SQS, DynamoDB, etc.)
 
@@ -342,6 +370,62 @@ resource "aws_secretsmanager_secret_version" "mongodb_uri_version" {
   # }
 }
 
+# USAR PARA PROD
+# resource "aws_secretsmanager_secret_version" "mongodb_uri_version" {
+#   secret_id = aws_secretsmanager_secret.mongodb_uri.id
+#   # ¡URI SIN CREDENCIALES! La aplicación las obtendrá por separado.
+#   # Ajusta el nombre de la base de datos ('mydatabase') y otras opciones según necesites.
+#   # Nota: No usamos SSL aquí para la conexión interna, puedes añadir ?ssl=true si configuras TLS en el contenedor Mongo.
+#   secret_string = format(
+#     "mongodb://%s.%s:%d/mydatabase?retryWrites=true&w=majority",
+#     aws_service_discovery_service.mongodb_discovery_service.name, # "mongodb"
+#     aws_service_discovery_private_dns_namespace.private_dns.name, # "service.local"
+#     27017                                                          # Puerto
+#   )
+
+#   lifecycle {
+#     ignore_changes = [secret_string]
+#   }
+#   depends_on = [aws_service_discovery_service.mongodb_discovery_service]
+# }
+
+# === ¡ALTERNATIVA SIMPLE PERO INSEGURA PARA DEV! ===
+# NO USAR EN PRODUCCIÓN
+
+# Necesitarías obtener el valor del secreto de credenciales usando un data source
+# ¡ADVERTENCIA! Esto puede causar problemas de dependencia cíclica o exponer el secreto
+# en planes si no se maneja con cuidado.
+data "aws_secretsmanager_secret_version" "mongo_creds_value" {
+  secret_id = aws_secretsmanager_secret.mongodb_credentials.id
+  depends_on = [aws_secretsmanager_secret_version.mongodb_credentials_version]
+}
+
+resource "aws_secretsmanager_secret_version" "mongodb_uri_version_INSECURE" {
+  secret_id = aws_secretsmanager_secret.mongodb_uri.id
+
+  # Decodificar el JSON del secreto de credenciales
+  # local_creds = jsondecode(data.aws_secretsmanager_secret_version.mongo_creds_value.secret_string)
+
+  # ¡URI COMPLETA CON CREDENCIALES EN TEXTO PLANO EN ESTE SECRETO!
+  secret_string = format(
+    "mongodb://%s:%s@%s.%s:%d/mydatabase?retryWrites=true&w=majority",
+    var.mongodb_root_username, # ¡Usando la variable directamente!
+    var.mongodb_root_password, # ¡Usando la variable directamente! ¡PELIGRO!
+    aws_service_discovery_service.mongodb_discovery_service.name,
+    aws_service_discovery_private_dns_namespace.private_dns.name,
+    27017
+ )
+
+  lifecycle {
+    ignore_changes = [secret_string]
+  }
+  depends_on = [
+    aws_service_discovery_service.mongodb_discovery_service,
+    # data.aws_secretsmanager_secret_version.mongo_creds_value # Dependencia explícita
+  ]
+}
+# --- FIN DE ALTERNATIVA INSEGURA ---
+
 # =========================================
 # ECS Cluster, Task Definition, Service
 # =========================================
@@ -385,6 +469,17 @@ resource "aws_ecs_task_definition" "task_definition" {
 
       # Inyectar el secreto como variable de entorno
       secrets = [
+        # USAR PARA PROD
+        # # El ARN de la URI (que ahora solo contendrá el host y opciones, sin credenciales)
+        # {
+        #   name      = "MONGODB_URI_TEMPLATE" # Nuevo nombre, ej. mongodb://mongodb.service.local:27017/mydb?ssl=false
+        #   valueFrom = aws_secretsmanager_secret.mongodb_uri.arn
+        # },
+        # # El ARN del secreto con las credenciales
+        # {
+        #   name      = "MONGODB_CREDENTIALS_SECRET_ARN"
+        #   valueFrom = aws_secretsmanager_secret.mongodb_credentials.arn
+        # },
         {
           name      = "MONGODB_URI" # Nombre de la variable de entorno en el contenedor
           valueFrom = aws_secretsmanager_secret.mongodb_uri.arn
@@ -611,6 +706,233 @@ resource "aws_acm_certificate_validation" "cert_validation_wait" {
 }
 
 # =========================================
+# Secrets Manager (MongoDB Credentials)
+# =========================================
+resource "aws_secretsmanager_secret" "mongodb_credentials" {
+  name        = "${local.name_prefix}-mongodb-credentials"
+  description = "Root credentials for the internal MongoDB instance on ECS for ${local.name_prefix}"
+  # recovery_window_in_days = 0 # Descomenta si NO quieres recuperación
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-mongodb-credentials"
+  })
+}
+
+resource "aws_secretsmanager_secret_version" "mongodb_credentials_version" {
+  secret_id = aws_secretsmanager_secret.mongodb_credentials.id
+  # Almacena las credenciales como un JSON simple
+  secret_string = jsonencode({
+    username = var.mongodb_root_username
+    password = var.mongodb_root_password # Pasado de forma segura
+  })
+
+  lifecycle {
+    # Evita que Terraform detecte cambios si el secreto se actualiza externamente
+    # (ej. si implementas rotación de contraseñas más adelante)
+    ignore_changes = [secret_string]
+  }
+}
+
+# =========================================
+# Service Discovery (Cloud Map)
+# =========================================
+resource "aws_service_discovery_private_dns_namespace" "private_dns" {
+  name        = var.service_discovery_namespace # ej. "service.local"
+  description = "Private DNS namespace for microservices in ${local.name_prefix}"
+  vpc         = aws_vpc.vpc.id
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-private-dns"
+  })
+}
+
+# =========================================
+# MongoDB Security Group
+# =========================================
+resource "aws_security_group" "mongodb_sg" {
+  name        = "${local.name_prefix}-mongodb-internal-sg"
+  description = "Allow MongoDB inbound traffic ONLY from App ECS tasks"
+  vpc_id      = aws_vpc.vpc.id
+
+  # Permitir tráfico entrante SOLO desde el Security Group de las tareas de la APLICACIÓN
+  # en el puerto por defecto de MongoDB (27017)
+  ingress {
+    description     = "Allow inbound from App ECS tasks"
+    from_port       = 27017
+    to_port         = 27017
+    protocol        = "tcp"
+    # ¡IMPORTANTE! Referencia cruzada al SG de tu aplicación existente
+    security_groups = [aws_security_group.ecs_sg.id]
+  }
+
+  # Permite toda la salida (necesario para que Mongo se comunique internamente si es un clúster,
+  # y para que el agente ECS funcione correctamente)
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-mongodb-sg"
+  })
+}
+
+# =========================================
+# MongoDB on ECS (Task Definition & Service)
+# =========================================
+
+# --- Definición de Tarea para MongoDB ---
+resource "aws_ecs_task_definition" "mongodb_task_definition" {
+  family                   = "${local.name_prefix}-mongodb-task"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = var.mongodb_ecs_cpu
+  memory                   = var.mongodb_ecs_memory
+  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn # Necesita acceso a Secrets Manager
+  # task_role_arn            = aws_iam_role.ecs_task_role.arn # Opcional: si mongo necesitara otros permisos AWS
+
+  # --- ¡IMPORTANTE! Persistencia ---
+  # Para persistencia en Fargate, necesitarías definir un volumen aquí
+  # y configurarlo en container_definitions. EFS es lo más común.
+  # Ejemplo conceptual con EFS (requiere crear EFS File System y Access Point):
+  # volume {
+  #   name = "mongodb-data"
+  #   efs_volume_configuration {
+  #     file_system_id          = aws_efs_file_system.mongodb_efs.id
+  #     transit_encryption      = "ENABLED"
+  #     authorization_config {
+  #        access_point_id = aws_efs_access_point.mongodb_ap.id
+  #        iam = "ENABLED" # Requires task_role_arn with EFS permissions
+  #     }
+  #   }
+  # }
+
+  container_definitions = jsonencode([
+    {
+      name      = "${local.name_prefix}-mongodb-container"
+      image     = "mongo:latest" # O una versión específica como "mongo:6.0"
+      essential = true
+      portMappings = [
+        {
+          containerPort = 27017
+          protocol      = "tcp"
+        }
+      ]
+      # CPU/Memory a nivel de contenedor (opcional si ya está en la tarea)
+      # memory = var.mongodb_ecs_memory
+      # cpu    = var.mongodb_ecs_cpu
+
+      # Inyectar las credenciales root desde el NUEVO secreto
+      secrets = [
+        {
+          name      = "MONGO_INITDB_ROOT_USERNAME" # Variable de entorno esperada por la imagen oficial de Mongo
+          valueFrom = "${aws_secretsmanager_secret.mongodb_credentials.arn}:username::" # Extrae 'username' del JSON
+        },
+        {
+          name      = "MONGO_INITDB_ROOT_PASSWORD" # Variable de entorno esperada por la imagen oficial de Mongo
+          valueFrom = "${aws_secretsmanager_secret.mongodb_credentials.arn}:password::" # Extrae 'password' del JSON
+        }
+      ]
+
+      # --- ¡IMPORTANTE! Montaje de Volumen para Persistencia ---
+      # Si defines un volumen arriba, móntalo aquí:
+      # mountPoints = [
+      #   {
+      #     sourceVolume  = "mongodb-data"
+      #     containerPath = "/data/db" # Directorio estándar de datos de MongoDB
+      #     readOnly      = false
+      #   }
+      # ]
+
+      # Configuración de logs (igual que tu app, pero quizás un stream diferente)
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = aws_cloudwatch_log_group.ecs_log_group.name
+          awslogs-region        = var.aws_region
+          awslogs-stream-prefix = "mongodb" # Prefijo diferente para logs de mongo
+        }
+      }
+      # Asegura que el contenedor no se inicie hasta que la red y los secretos estén listos
+      # dependsOn = [] # Podrías añadir dependencias si es necesario
+      # healthCheck = { ... } # Considera añadir un health check específico para Mongo
+    }
+  ])
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-mongodb-task_definition"
+  })
+}
+
+# --- Servicio ECS para MongoDB ---
+resource "aws_ecs_service" "mongodb_service" {
+  name            = "${local.name_prefix}-mongodb-service"
+  cluster         = aws_ecs_cluster.cluster.id
+  task_definition = aws_ecs_task_definition.mongodb_task_definition.arn
+  desired_count   = 1 # Solo una instancia para dev sin replicación
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    # Usa las mismas subredes que tu aplicación (idealmente deberían ser privadas)
+    subnets = aws_subnet.subnets.*.id
+    # Asigna el grupo de seguridad específico de MongoDB
+    security_groups = [aws_security_group.mongodb_sg.id]
+    # MongoDB NO necesita IP pública
+    assign_public_ip = false
+  }
+
+  # Registrar el servicio en Cloud Map para descubrimiento
+  service_registries {
+    registry_arn = aws_service_discovery_service.mongodb_discovery_service.arn
+    # port = 27017 # No necesario para DNS discovery type A
+  }
+
+  # Opciones de despliegue (rolling update es el predeterminado)
+  deployment_controller {
+    type = "ECS"
+  }
+
+  # Podrías añadir Circuit Breaker aquí también
+  # deployment_circuit_breaker { ... }
+
+  # Esperar a que el servicio se estabilice
+  wait_for_steady_state = true
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-mongodb-service"
+  })
+
+  # Asegúrate de que el namespace exista antes de crear el servicio
+  depends_on = [aws_service_discovery_private_dns_namespace.private_dns]
+}
+
+# --- Recurso de Service Discovery específico para MongoDB ---
+resource "aws_service_discovery_service" "mongodb_discovery_service" {
+  name = "mongodb" # El servicio será descubrible como 'mongodb.service.local'
+
+  dns_config {
+    namespace_id = aws_service_discovery_private_dns_namespace.private_dns.id
+    # Crea registros A que apuntan a las IPs de las tareas
+    dns_records {
+      ttl  = 10 # TTL bajo para cambios rápidos en dev
+      type = "A"
+    }
+    routing_policy = "MULTIVALUE" # O "WEIGHTED" si tienes varias instancias
+  }
+
+  # Health check opcional gestionado por Cloud Map (alternativa al health check de ECS/ALB)
+  # health_check_custom_config {
+  #   failure_threshold = 1
+  # }
+
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-mongodb-discovery"
+  })
+}
+
+# =========================================
 # Outputs
 # =========================================
 output "alb_app_url" {
@@ -631,4 +953,15 @@ output "ecr_repository_url" {
 output "cloudwatch_log_group_name" {
   description = "Nombre del grupo de logs de CloudWatch para las tareas ECS"
   value       = aws_cloudwatch_log_group.ecs_log_group.name
+}
+
+output "mongodb_service_discovery_name" {
+  description = "Internal DNS name for the MongoDB service within the VPC"
+  value       = format("%s.%s", aws_service_discovery_service.mongodb_discovery_service.name, aws_service_discovery_private_dns_namespace.private_dns.name)
+}
+
+output "mongodb_credentials_secret_arn" {
+  description = "ARN of the Secrets Manager secret holding MongoDB credentials"
+  value       = aws_secretsmanager_secret.mongodb_credentials.arn
+  sensitive   = true
 }
