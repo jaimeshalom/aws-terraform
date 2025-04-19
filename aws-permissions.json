@@ -230,6 +230,23 @@
             ],
             "Resource": "*"
         },
+		{
+		  "Effect": "Allow",
+		  "Action": [
+			"servicediscovery:CreatePrivateDnsNamespace",
+			"servicediscovery:GetNamespace",
+			"servicediscovery:DeleteNamespace",
+			"servicediscovery:CreateService",
+			"servicediscovery:GetService",
+			"servicediscovery:UpdateService",
+			"servicediscovery:DeleteService",
+			"servicediscovery:GetOperation",
+			"servicediscovery:TagResource",
+			"servicediscovery:ListTagsForResource",
+			"route53:CreateHostedZone"
+		  ],
+		  "Resource": "*"
+		},
         {
             "Effect": "Allow",
             "Action": [
