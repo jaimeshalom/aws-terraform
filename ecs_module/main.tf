@@ -107,7 +107,7 @@ resource "aws_route_table_association" "public" {
 # =========================================
 
 resource "aws_iam_role" "ecs_task_execution_role" {
-  name = "${local.name_prefix}-ecs_task_execution_role"
+  name = "${local.name_prefix}-ecs-task-execution-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -123,7 +123,7 @@ resource "aws_iam_role" "ecs_task_execution_role" {
   })
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-ecs_task_execution_role"
+    Name = "${local.name_prefix}-ecs-task-execution-role"
   })
 }
 
@@ -135,7 +135,7 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
 
 # Política para leer el secreto de MongoDB desde Secrets Manager
 resource "aws_iam_policy" "mongodb_uri_allow_read" {
-  name        = "${local.name_prefix}-mongodb_uri_allow_read"
+  name        = "${local.name_prefix}-mongodb-uri-allow-read"
   description = "Permite al rol de ejecución de tareas ECS leer el secreto de MongoDB"
 
   policy = jsonencode({
@@ -153,7 +153,7 @@ resource "aws_iam_policy" "mongodb_uri_allow_read" {
   })
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-mongodb_uri_allow_read"
+    Name = "${local.name_prefix}-mongodb-uri-allow-read"
   })
 }
 
@@ -166,7 +166,7 @@ resource "aws_iam_role_policy_attachment" "attach_mongodb_uri_allow_read" {
 
 # Rol IAM para la propia tarea (permisos que necesita tu aplicación)
 resource "aws_iam_role" "ecs_task_role" {
-  name = "${local.name_prefix}-ecs_task_role"
+  name = "${local.name_prefix}-ecs-task-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -183,7 +183,7 @@ resource "aws_iam_role" "ecs_task_role" {
   })
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-ecs_task_role"
+    Name = "${local.name_prefix}-ecs-task-role"
   })
 }
 
@@ -305,7 +305,7 @@ resource "aws_lb_listener" "https_listener" {
 # Elastic Container Registry (ECR)
 # =========================================
 resource "aws_ecr_repository" "ecr_repository" {
-  name                 = "${local.name_prefix}-ecr_repository" # Asegúrarse de que coincida con tu variable env en GHA
+  name                 = "${local.name_prefix}-ecr-repository" # Asegúrarse de que coincida con tu variable env en GHA
   image_tag_mutability = "IMMUTABLE"                           # Buena práctica para evitar sobrescribir tags
 
   encryption_configuration {
@@ -317,7 +317,7 @@ resource "aws_ecr_repository" "ecr_repository" {
   }
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-ecr_repository"
+    Name = "${local.name_prefix}-ecr-repository"
   })
 }
 
@@ -325,12 +325,12 @@ resource "aws_ecr_repository" "ecr_repository" {
 # Secrets Manager (MongoDB URI)
 # =========================================
 resource "aws_secretsmanager_secret" "mongodb_uri" {
-  name                    = "${local.name_prefix}-mongodb_uri"
+  name                    = "${local.name_prefix}-mongodb-uri"
   description             = "Cadena de conexión a MongoDB para ${local.name_prefix}"
   recovery_window_in_days = 0 # Sin ventana de recuperación, eliminación inmediata (CUIDADO en producción)
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-mongodb_uri"
+    Name = "${local.name_prefix}-mongodb-uri"
   })
 }
 
@@ -361,7 +361,7 @@ resource "aws_cloudwatch_log_group" "ecs_log_group" {
 
 # ECS Task Definition
 resource "aws_ecs_task_definition" "task_definition" {
-  family                   = "${local.name_prefix}-task_definition"
+  family                   = "${local.name_prefix}-task-definition"
   network_mode             = "awsvpc"
   memory                   = var.ecs_task_memory
   cpu                      = var.ecs_task_cpu
@@ -411,7 +411,7 @@ resource "aws_ecs_task_definition" "task_definition" {
   ])
 
   tags = merge(local.common_tags, {
-    Name       = "${local.name_prefix}-task_definition"
+    Name       = "${local.name_prefix}-task-definition"
     GitVersion = var.git_version_tag # Etiqueta pasada desde GHA
   })
 }
