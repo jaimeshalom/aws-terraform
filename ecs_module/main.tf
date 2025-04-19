@@ -578,7 +578,10 @@ resource "aws_ecs_service" "service" {
   }
 
   # Asegura que el servicio espere a que el ALB esté listo
-  depends_on = [aws_lb_listener.https_listener]
+  depends_on = [
+    aws_lb_listener.https_listener,
+    aws_ecs_service.mongodb_service # Asegura que Mongo se intente crear/estabilizar primero
+  ]
 
   # Opciones de despliegue (rolling update es el predeterminado)
   # deployment_controller {
