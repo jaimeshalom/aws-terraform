@@ -15,7 +15,7 @@ module "ecs_service" {
   project_name              = var.project_name
   owner                     = var.owner
   mongodb_uri               = var.mongodb_uri
-  ecr_image_tag             = var.image_tag
+  image_tag                 = var.image_tag
   git_version_tag           = var.git_version_tag
   ecs_service_desired_count = var.ecs_service_desired_count
   ecs_task_cpu              = var.ecs_task_cpu

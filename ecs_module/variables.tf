@@ -34,7 +34,7 @@ variable "mongodb_uri" {
   default     = "mongodb://localhost:27017"
 }
 
-variable "ecr_image_tag" {
+variable "image_tag" {
   description = "Tag de la imagen de Docker"
   type        = string
   default     = "latest"
