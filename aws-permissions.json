@@ -44,9 +44,13 @@
 				"secretsmanager:DescribeSecret",
 				"secretsmanager:GetSecretValue",
 				"secretsmanager:ListSecretVersionIds",
-				"secretsmanager:GetResourcePolicy"
+				"secretsmanager:GetResourcePolicy",
+				"secretsmanager:CreateSecret",
+				"secretsmanager:TagResource",
+				"secretsmanager:PutSecretValue",
+				"secretsmanager:DeleteSecret"
 			],
-			"Resource": "arn:aws:secretsmanager:us-east-1:*:secret:${aws:PrincipalTag/Project}-${aws:PrincipalTag/Environment}-*"
+			"Resource": "arn:aws:secretsmanager:*:*:secret:${aws:PrincipalTag/Project}-${aws:PrincipalTag/Environment}-*"
 		},
 		{
 			"Effect": "Allow",
@@ -178,16 +182,6 @@
 				"ecr:TagResource"
 			],
 			"Resource": "arn:aws:ecr:*:*:repository/${aws:PrincipalTag/Project}-${aws:PrincipalTag/Environment}-*"
-		},
-		{
-			"Effect": "Allow",
-			"Action": [
-				"secretsmanager:CreateSecret",
-				"secretsmanager:TagResource",
-				"secretsmanager:PutSecretValue",
-				"secretsmanager:DeleteSecret"
-			],
-			"Resource": "arn:aws:secretsmanager:*:*:secret:${aws:PrincipalTag/Project}-${aws:PrincipalTag/Environment}-*"
 		},
 		{
 			"Effect": "Allow",
