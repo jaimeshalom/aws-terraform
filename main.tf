@@ -22,6 +22,7 @@ module "ecs_service" {
   ecs_task_memory           = var.ecs_task_memory
   domain_name               = var.domain_name
   route53_zone_name         = var.route53_zone_name
+  mongodb_root_password     = var.mongodb_root_password
 }
 
 # module "ecs_service_stage" {

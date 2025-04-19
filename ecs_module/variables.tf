@@ -86,13 +86,13 @@ variable "route53_zone_name" {
 variable "mongodb_ecs_cpu" {
   description = "CPU units for the MongoDB ECS task"
   type        = number
-  default     = 512 # Ajusta según necesidad (1024 = 1 vCPU)
+  default     = 256 # Ajusta según necesidad (1024 = 1 vCPU)
 }
 
 variable "mongodb_ecs_memory" {
   description = "Memory (in MiB) for the MongoDB ECS task"
   type        = number
-  default     = 1024 # Ajusta según necesidad (1 GB)
+  default     = 512 # Ajusta según necesidad (1 GB)
 }
 
 variable "mongodb_root_username" {

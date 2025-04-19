@@ -106,3 +106,11 @@ variable "route53_zone_name" {
     error_message = "El valor de route53_zone_name debe terminar con un punto (.). Ejemplo: 'midominio.com.'."
   }
 }
+
+variable "mongodb_root_password" {
+  description = "Root password for the internal MongoDB instance. ¡Gestionar de forma segura!"
+  type        = string
+  sensitive   = true
+  # No pongas un default aquí. Pásalo como variable de entorno (TF_VAR_mongodb_root_password)
+  # o usa un archivo tfvars seguro.
+}
