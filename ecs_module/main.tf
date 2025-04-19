@@ -711,7 +711,7 @@ resource "aws_acm_certificate_validation" "cert_validation_wait" {
 resource "aws_secretsmanager_secret" "mongodb_credentials" {
   name        = "${local.name_prefix}-mongodb-credentials"
   description = "Root credentials for the internal MongoDB instance on ECS for ${local.name_prefix}"
-  # recovery_window_in_days = 0 # Descomenta si NO quieres recuperación
+  recovery_window_in_days = 0 # Descomenta si NO quieres recuperación
 
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-mongodb-credentials"
