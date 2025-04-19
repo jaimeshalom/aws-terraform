@@ -879,8 +879,16 @@ resource "aws_ecs_service" "mongodb_service" {
     subnets = aws_subnet.subnets.*.id
     # Asigna el grupo de seguridad específico de MongoDB
     security_groups = [aws_security_group.mongodb_sg.id]
-    # MongoDB NO necesita IP pública
-    assign_public_ip = false
+
+    # # MongoDB NO necesita IP pública
+    # assign_public_ip = false
+
+    # CAMBIO AQUÍ: Permitir IP pública para que pueda usar el IGW en la subred pública
+    # Solución simple y temporal. Arreglo rápido, requiere mínimo cambio en el código
+    # Expone la interfaz de red de la base de datos a internet (aunque el Security Group mongodb_sg
+    # debería seguir restringiendo el acceso solo desde el SG de tu aplicación). No es la práctica
+    # recomendada para bases de datos.
+    assign_public_ip = true
   }
 
   # Registrar el servicio en Cloud Map para descubrimiento
