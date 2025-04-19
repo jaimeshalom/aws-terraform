@@ -59,7 +59,6 @@
 				"ec2:DescribeSecurityGroups",
 				"ec2:DescribeVpcAttribute",
 				"ec2:DescribeNetworkInterfaces",
-				"ec2:DescribeVpcEndpoints",
 				"ec2:DescribePrefixLists"
 			],
 			"Resource": "*"
@@ -73,8 +72,7 @@
 				"ec2:CreateInternetGateway",
 				"ec2:CreateSecurityGroup",
 				"ec2:CreateRouteTable",
-				"ec2:CreateRoute",
-				"ec2:CreateVpcEndpoint"
+				"ec2:CreateRoute"
 			],
 			"Resource": "*"
 		},
@@ -94,8 +92,7 @@
 				"ec2:DeleteSubnet",
 				"ec2:DetachInternetGateway",
 				"ec2:DeleteInternetGateway",
-				"ec2:DeleteVpc",
-				"ec2:DeleteVpcEndpoints"
+				"ec2:DeleteVpc"
 			],
 			"Resource": [
 				"*"
