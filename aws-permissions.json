@@ -222,6 +222,7 @@
             "Resource": "*"
         },
         {
+            "Sid": "AllowListRoute53ResourcesForDiscovery",
             "Effect": "Allow",
             "Action": [
 				"route53:ListHostedZones",
@@ -232,17 +233,26 @@
             "Resource": "*"
         },
         {
+            "Sid": "AllowGetChangeStatusAfterUpdate",
             "Effect": "Allow",
             "Action": "route53:GetChange",
             "Resource": "arn:aws:route53:::change/*"
         },
         {
+            "Sid": "AllowManageRecordsInTaggedHostedZone",
             "Effect": "Allow",
             "Action": [
-				"route53:ChangeResourceRecordSets",
-				"route53:GetHostedZone"
-			],
-            "Resource": "arn:aws:route53:::hostedzone/Z05733023S3AADOASNY29"
+				"route53:GetHostedZone",
+                "route53:ChangeResourceRecordSets"
+            ],
+            "Resource": "arn:aws:route53:::hostedzone/*",
+			"Condition": {
+				"StringEquals": {
+					"aws:ResourceTag/Project": "${aws:PrincipalTag/Project}",
+					"aws:ResourceTag/Environment": "${aws:PrincipalTag/Environment}",
+					"aws:ResourceTag/ManagedBy": "Terraform"
+				}
+			}
         }
 	]
 }
