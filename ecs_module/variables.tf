@@ -82,3 +82,15 @@ variable "route53_zone_name" {
     error_message = "El valor de route53_zone_name debe terminar con un punto (.). Ejemplo: 'midominio.com.'."
   }
 }
+
+variable "vpc_cidr_block" {
+  description = "El bloque CIDR para la VPC."
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
+variable "subnet_count" {
+  description = "Número máximo de zonas de disponibilidad (y subredes públicas) a usar. null para usar todas las disponibles."
+  type        = number
+  default     = null # Usar todas las AZs disponibles por defecto
+}

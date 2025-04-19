@@ -32,6 +32,9 @@ locals {
     Owner       = local.effective_owner
     ManagedBy   = "Terraform"
   }
+
+  # Selecciona las AZs a usar basado en var.subnet_count
+  selected_availability_zones = var.subnet_count == null ? data.aws_availability_zones.available.names : slice(data.aws_availability_zones.available.names, 0, var.subnet_count)
 }
 
 # =========================================
@@ -39,7 +42,7 @@ locals {
 # =========================================
 
 resource "aws_vpc" "vpc" {
-  cidr_block           = "10.0.0.0/16"
+  cidr_block           = var.vpc_cidr_block
   enable_dns_support   = true
   enable_dns_hostnames = true
 
@@ -48,14 +51,13 @@ resource "aws_vpc" "vpc" {
   })
 }
 
-# Subredes PÚBLICAS en cada AZ disponible
+# Subredes PÚBLICAS en cada AZ seleccionada
 resource "aws_subnet" "subnets" {
-  # count                 = 3 # Considera usar length(data.aws_availability_zones.available.names) si se quiere usar todas las AZs disponibles
-  count                   = length(data.aws_availability_zones.available.names)
+  count                   = length(local.selected_availability_zones) # Usa la longitud de las AZs seleccionadas
   vpc_id                  = aws_vpc.vpc.id
   cidr_block              = cidrsubnet(aws_vpc.vpc.cidr_block, 8, count.index)
   map_public_ip_on_launch = true
-  availability_zone       = element(data.aws_availability_zones.available.names, count.index)
+  availability_zone       = local.selected_availability_zones[count.index]
 
   tags = merge(local.common_tags, {
     Name = "${local.name_prefix}-public-subnet-${count.index}"
@@ -227,7 +229,7 @@ resource "aws_alb" "alb" {
   name               = "${local.name_prefix}-alb"
   load_balancer_type = "application"
   internal           = false
-  subnets            = aws_subnet.subnets.*.id
+  subnets            = [for s in aws_subnet.subnets : s.id]
   security_groups    = [aws_security_group.alb_sg.id]
 
   tags = merge(local.common_tags, {
@@ -380,7 +382,7 @@ resource "aws_ecs_task_definition" "task_definition" {
         }
       ]
       # Asegúrate que estos valores coincidan o sean menores que los definidos a nivel de tarea
-      memory = var.ecs_task_memory # Puedes definir límites por contenedor también
+      memory = var.ecs_task_memory # Se puede definir límites por contenedor también
       cpu    = var.ecs_task_cpu
 
       # Inyectar el secreto como variable de entorno
@@ -469,7 +471,7 @@ resource "aws_ecs_service" "service" {
     # Las tareas necesitan este SG para comunicarse y ser alcanzadas por el ALB
     security_groups = [aws_security_group.ecs_sg.id]
     # Usa las subredes públicas creadas
-    subnets = aws_subnet.subnets.*.id
+    subnets = [for s in aws_subnet.subnets : s.id]
     # CRÍTICO: Asignar IP pública para que las tareas en subredes públicas
     # puedan usar el IGW para acceder a ECR, Secrets Manager, etc.
     assign_public_ip = true
