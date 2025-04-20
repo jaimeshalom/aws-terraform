@@ -191,13 +191,11 @@
 			"Resource": "*"
 		},
 		{
-			"Sid": "AllowDescribeLogGroupsForDiscovery",
 			"Effect": "Allow",
 			"Action": "logs:DescribeLogGroups",
 			"Resource": "arn:aws:logs:*:*:log-group:*"
 		},
 		{
-			"Sid": "AllowManageSpecificECSLogGroup",
 			"Effect": "Allow",
 			"Action": [
 				"logs:CreateLogGroup",
@@ -222,7 +220,6 @@
 			"Resource": "*"
 		},
 		{
-			"Sid": "AllowListHostedZones",
 			"Effect": "Allow",
 			"Action": [
 				"route53:ListHostedZones",
@@ -232,27 +229,17 @@
 			"Resource": "*"
 		},
 		{
-			"Sid": "AllowGetChangeStatusAfterUpdate",
 			"Effect": "Allow",
 			"Action": "route53:GetChange",
 			"Resource": "arn:aws:route53:::change/*"
 		},
 		{
-			"Sid": "AllowListResourceRecordSets",
 			"Effect": "Allow",
 			"Action": [
 				"route53:ListResourceRecordSets",
 				"route53:GetHostedZone"
 			],
 			"Resource": "arn:aws:route53:::hostedzone/*"
-		},
-		{
-			"Sid": "AllowManageRecordsInTaggedHostedZone",
-			"Effect": "Allow",
-			"Action": [
-				"route53:ChangeResourceRecordSets"
-			],
-			"Resource": "arn:aws:route53:::hostedzone/HOSTED_ZONE_ID"
 		}
 	]
 }
