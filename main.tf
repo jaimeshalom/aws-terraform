@@ -1,8 +1,14 @@
 terraform {
   backend "s3" {
-    bucket = "tfstate-terraform-practice-afda234234asw34gfer35"
-    key    = "terraform/terraform-practice.tfstate"
-    region = "us-east-1"
+    use_lockfile = true
+  }
+}
+
+terraform {
+  backend "s3" {
+    # bucket = "..." // Se pasa con -backend-config
+    # key    = "..." // Se pasa con -backend-config
+    # region = "..." // Se pasa con -backend-config
     use_lockfile = true
   }
 }
