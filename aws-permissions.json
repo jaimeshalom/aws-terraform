@@ -179,10 +179,20 @@
 				"ecr:ListTagsForResource",
 				"ecr:DeleteRepository",
 				"ecr:CreateRepository",
-				"ecr:TagResource"
+				"ecr:TagResource",
+				"ecr:BatchCheckLayerAvailability",
+				"ecr:CompleteLayerUpload",
+				"ecr:InitiateLayerUpload",
+				"ecr:PutImage",
+				"ecr:UploadLayerPart"
 			],
 			"Resource": "arn:aws:ecr:*:*:repository/${aws:PrincipalTag/Project}-${aws:PrincipalTag/Environment}-*"
 		},
+        {
+            "Effect": "Allow",
+            "Action": "ecr:GetAuthorizationToken",
+            "Resource": "*"
+        },
 		{
 			"Effect": "Allow",
 			"Action": [
