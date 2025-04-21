@@ -1,11 +1,5 @@
 terraform {
   backend "s3" {
-    use_lockfile = true
-  }
-}
-
-terraform {
-  backend "s3" {
     # bucket = "..." // Se pasa con -backend-config
     # key    = "..." // Se pasa con -backend-config
     # region = "..." // Se pasa con -backend-config
