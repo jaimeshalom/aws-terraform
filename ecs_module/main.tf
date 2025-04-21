@@ -245,10 +245,10 @@ resource "aws_lb_target_group" "tg" {
   vpc_id      = aws_vpc.vpc.id
 
   health_check {
-    path     = "/"            # Ruta de health check de la app
-    port     = "traffic-port" # Usa el puerto del contenedor (3000)
+    path     = "/reference"            # Ruta de health check de la app
+    port     = "traffic-port"          # Usa el puerto del contenedor (3000)
     protocol = "HTTP"
-    matcher  = "200" # Puedes usar "200-299" si tu app devuelve otros códigos 2xx para OK
+    matcher  = "200-299"
     interval = 30    # Intervalo entre chequeos
     timeout  = 5     # Tiempo de espera para respuesta
   }
