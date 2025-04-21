@@ -130,6 +130,7 @@
 				"elasticloadbalancing:CreateListener",
 				"elasticloadbalancing:CreateLoadBalancer",
 				"elasticloadbalancing:ModifyTargetGroupAttributes",
+				"elasticloadbalancing:ModifyTargetGroup",
 				"elasticloadbalancing:ModifyLoadBalancerAttributes",
 				"elasticloadbalancing:ModifyListenerAttributes",
 				"elasticloadbalancing:DeleteListener",
